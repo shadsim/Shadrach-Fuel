@@ -100,7 +100,9 @@ header{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify
 .meal-section+.meal-section{padding-top:0}
 .meal-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
 .meal-section-lbl{font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2.5px;color:var(--txtb);font-weight:700}
-.meal-time-sm{background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:6px 10px;color:var(--txtb);font-family:'JetBrains Mono',monospace;font-size:14px;outline:none}
+.meal-time-sm{background:var(--s2);border:1px solid var(--b2);border-radius:8px;padding:6px 10px;width:90px;text-align:center;color:var(--txtb);font-family:'JetBrains Mono',monospace;font-size:14px;outline:none}
+.now-btn{background:none;border:1px solid var(--b2);border-radius:7px;padding:4px 9px;color:var(--zone);font-family:'JetBrains Mono',monospace;font-size:9px;letter-spacing:1px;cursor:pointer;transition:all .2s;margin-left:6px;flex-shrink:0}
+.now-btn:active{background:var(--zone-d);border-color:var(--zone)}
 .meal-time-sm:focus{border-color:var(--zone)}
 
 /* COMPACT MACRO ROW (prev meal) */
@@ -327,7 +329,8 @@ header{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify
 .chat-send:hover{opacity:.85}
 .chat-send:disabled{opacity:.3;cursor:default}
 .chat-send svg{width:18px;height:18px;fill:white}
-.advisor-intro{text-align:center;padding:16px 20px 10px;color:var(--txt2)}
+.advisor-intro{text-align:center;padding:4px 20px 0;color:var(--txt2)}
+.advisor-header{text-align:center;padding:16px 20px 10px;color:var(--txt2)}
 .ai-intro-ico{font-size:28px;margin-bottom:8px}
 .ai-intro-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:16px;letter-spacing:3px;color:var(--txtb);display:block;margin-bottom:6px}
 .ai-intro-desc{font-size:13px;line-height:1.65;color:var(--txt2)}
@@ -507,7 +510,7 @@ header{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify
     <div class="meal-section">
       <div class="meal-section-header">
         <span class="meal-section-lbl">PREVIOUS MEAL</span>
-        <input type="time" class="meal-time-sm" id="prev-meal-time" onchange="S.prevMealTime=this.value||null;renderFastingWindow();renderFuel();renderBurnBreakdown();">
+        <div style="display:flex;align-items:center;gap:6px"><input type="time" class="meal-time-sm" id="prev-meal-time" onchange="S.prevMealTime=this.value||null;renderFastingWindow();renderFuel();renderBurnBreakdown();"><span style="font-size:13px;color:var(--txt2)">🕐</span></div>
       </div>
       <span class="card-label" style="margin-bottom:6px">WHAT DID YOU DO BEFORE THIS MEAL?</span>
       <div class="meal-act-list" id="prev-meal-acts"></div>
@@ -548,7 +551,7 @@ header{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify
     <div class="meal-section">
       <div class="meal-section-header">
         <span class="meal-section-lbl">LAST MEAL</span>
-        <input type="time" class="meal-time-sm" id="meal-time" onchange="S.mealTime=this.value||null;renderFastingWindow();renderFuel();renderBurnBreakdown();">
+        <div style="display:flex;align-items:center;gap:6px"><input type="time" class="meal-time-sm" id="meal-time" onchange="S.mealTime=this.value||null;renderFastingWindow();renderFuel();renderBurnBreakdown();"><button class="now-btn" onclick="setNow('meal-time','mealTime')">NOW</button></div>
       </div>
 
       <span class="card-label" style="margin-bottom:6px">WHAT DID YOU DO BEFORE THIS MEAL?</span>
@@ -653,11 +656,13 @@ header{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify
 <div id="tab-advisor" class="tab">
 <div class="advisor-wrap">
   <div class="chat-messages" id="chat-messages">
-    <div class="advisor-intro" id="advisor-intro">
+    <div class="advisor-header">
       <div class="ai-intro-ico">&#9889;</div>
       <span class="ai-intro-title">FUEL ADVISOR</span>
-      <p class="ai-intro-desc">Describe what you ate and I'll calculate the macro split. You can then apply it directly to your meal context.</p>
-      <div class="suggestion-chips">
+      <p class="ai-intro-desc">Describe what you ate for macros and micros, or ask me what to eat and when based on your current state and today's plan.</p>
+    </div>
+    <div id="advisor-intro">
+      <div class="suggestion-chips" style="padding:8px 0 4px">
         <div class="chip" onclick="sendWhatToEat()" style="border-color:rgba(61,139,255,.3);color:var(--zone)">What should I eat and when?</div>
         <div class="chip" onclick="sendChip(this.textContent)">2 boiled eggs + toast</div>
         <div class="chip" onclick="sendChip(this.textContent)">Rice, dal and sabzi</div>
@@ -1596,6 +1601,18 @@ function buildSystemPrompt() {
   const iron_rda = MICRO_LIST.find(m=>m.id==='iron').getRDA(S.age,male);
   const pot_rda  = MICRO_LIST.find(m=>m.id==='potassium').getRDA(S.age,male);
 
+  // Build planner context
+  const plannerContext = (() => {
+    if (!P || !P.blocks || P.blocks.length === 0) return '';
+    const blockSummary = P.blocks.map(function(b) {
+      const a = ACTS.find(x => x.id === b.actId) || ACTS[2];
+      const hrs = Math.round(b.mins / 60 * 10) / 10;
+      return `${a.nm} ${b.mins < 60 ? b.mins+'min' : hrs+'h'}`;
+    }).join(', ');
+    const goal = P.goal === 'lose' ? 'lose fat' : P.goal === 'build' ? 'build muscle' : 'maintain';
+    return `Planned activities today: ${blockSummary}. Goal: ${goal}.`;
+  })();
+
   const state = [
     `User: ${S.age}yo ${male?'male':'female'}, ${S.weight}kg, ${S.height}cm.`,
     `Current activity: ${curA.nm}.`,
@@ -1603,6 +1620,7 @@ function buildSystemPrompt() {
     hrs!==null ? `Last meal: ${Math.round(hrs*10)/10}h ago (C${S.carbs}g F${S.fat}g P${S.prot}g).` : 'No last meal logged.',
     fw!==null  ? `Fasting window: ${Math.round(fw*10)/10}h.` : '',
     topLastA   ? `Pre-meal activity: ${topLastA.nm}.` : '',
+    plannerContext,
   ].filter(Boolean).join(' ');
 
   return `You are the FUEL Advisor — a nutrition and metabolism assistant built into the FUEL app.
@@ -1616,14 +1634,21 @@ Write one brief sentence summarising the meal, then end your response with these
 BREAKDOWN:
 [item]: carbs=[n] fat=[n] protein=[n]
 MACROS: carbs=[n] fat=[n] protein=[n]
-Then for any micronutrient present at over 5% of daily target, add:
+For EVERY food query, you MUST check all 8 micros below and report each one that is present in any meaningful amount. Do not skip any. Check them one by one:
+- Vitamin D3 (found in: fatty fish, egg yolks, fortified foods)
+- Magnesium (found in: nuts, seeds, leafy greens, legumes)
+- Zinc (found in: meat, shellfish, nuts, seeds, legumes)
+- Vitamin B12 (found in: meat, fish, eggs, dairy)
+- Iron (found in: meat, leafy greens, legumes, nuts)
+- Potassium (found in: sweet potato, banana, spinach, avocado, fish)
+- Omega-3 (found in: fatty fish, flaxseed, walnuts)
+- Vitamin K2 (found in: fermented foods, hard cheese, egg yolks, meat)
+
+For each micro that is present, add a line:
 MICRO: [name] | AMOUNT: [number] | UNIT: [unit]
-Daily targets and REQUIRED units (use ONLY these units, never convert):
-VitD3:${vitD_rda} IU | Mg:${mag_rda} mg | Zn:${zinc_rda} mg | B12:2.4 mcg | Fe:${iron_rda} mg | K:${pot_rda} mg | Omega3:500 mg | K2:100 mcg
-CRITICAL: Report Vitamin D3 in mcg (modern FDA standard), B12 in mcg, K2 in mcg, Omega-3 in mg, all others (Mg Zn Fe K) in mg. Never use IU.
 
 IF the user asks what to eat or when to eat:
-Answer with: RIGHT NOW (specific food), NEXT MEAL (clock time + food), TRAINING (what changes if training).
+Answer with: RIGHT NOW (specific food), NEXT MEAL (clock time + food), TRAINING (specific advice based on planned activities — if activities are planned, give exact timing around them).
 
 FOR all other questions:
 Answer briefly and practically. No MACROS line needed.
@@ -1782,7 +1807,7 @@ async function sendMessage(){
     for(var i=0;i<models.length;i++){
       var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+models[i]+':generateContent',{
         method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':GEMINI_KEY},
-        body:JSON.stringify({contents:contents,systemInstruction:{parts:[{text:buildSystemPrompt()}]},generationConfig:{maxOutputTokens:2000,temperature:0.3}})
+        body:JSON.stringify({contents:contents,systemInstruction:{parts:[{text:buildSystemPrompt()}]},generationConfig:{maxOutputTokens:2500,temperature:0.3}})
       });
       data=await res.json();
       if(res.ok){succeeded=true;break;}
@@ -2128,6 +2153,16 @@ function parseFoodResponse(text){
 // ── UPDATE ──
 function update(){renderZones();renderActivities();renderMealActivities('last');renderMealActivities('prev');renderFastingWindow();renderFuel();renderBurnBreakdown();renderMacroInputs();renderPrevMacroInputs();renderAction();}
 function updatePlanner(){renderBlocks();renderBurnSummary();renderMacroRec();renderTiming();}
+function setNow(inputId, stateKey) {
+  var d = new Date();
+  var val = String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  var el = document.getElementById(inputId);
+  if (!el) return;
+  el.value = val;
+  S[stateKey] = val;
+  renderFastingWindow(); renderFuel(); renderBurnBreakdown();
+}
+
 function switchTab(t){
   document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
