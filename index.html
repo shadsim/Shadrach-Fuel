@@ -282,14 +282,14 @@ header{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify
 
 /* ADVISOR */
 .advisor-wrap{max-width:500px;margin:0 auto;display:flex;flex-direction:column;height:calc(100vh - 60px);position:relative}
-.chat-messages{overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:10px 14px 6px}
+.chat-messages{overflow-y:auto;display:flex;flex-direction:column;gap:10px;padding:10px 14px 6px;-webkit-overflow-scrolling:touch}
 .chat-messages::-webkit-scrollbar{width:3px}
 .chat-messages::-webkit-scrollbar-thumb{background:var(--b2);border-radius:2px}
 .msg-row{display:flex;flex-direction:column}
 .msg-row.user{align-items:flex-end}
 .msg-row.ai{align-items:flex-start}
 .msg-sender{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:11px;letter-spacing:2px;color:var(--txt2);margin-bottom:3px;padding:0 4px}
-.msg-bubble{max-width:85%;padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.6}
+.msg-bubble{max-width:92%;padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.65;word-break:break-word;overflow-wrap:break-word}
 .msg-row.user .msg-bubble{background:var(--zone-d);border:1px solid rgba(61,139,255,.3);color:var(--txtb);border-bottom-right-radius:4px}
 .msg-row.ai   .msg-bubble{background:var(--s1);border:1px solid var(--b1);color:var(--txt);border-bottom-left-radius:4px}
 .msg-time{font-family:'JetBrains Mono',monospace;font-size:8px;color:var(--txt2);margin-top:3px;padding:0 4px}
@@ -1648,7 +1648,10 @@ For each micro that is present, add a line:
 MICRO: [name] | AMOUNT: [number] | UNIT: [unit]
 
 IF the user asks what to eat or when to eat:
-Answer with: RIGHT NOW (specific food), NEXT MEAL (clock time + food), TRAINING (specific advice based on planned activities — if activities are planned, give exact timing around them).
+Structure your response with each section on its own line, like this:
+RIGHT NOW: [specific food]
+NEXT MEAL: [clock time] — [specific food]
+TRAINING: [specific advice based on planned activities]
 
 FOR all other questions:
 Answer briefly and practically. No MACROS line needed.
