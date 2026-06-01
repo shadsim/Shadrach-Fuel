@@ -510,7 +510,7 @@ header{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify
     <div class="meal-section">
       <div class="meal-section-header">
         <span class="meal-section-lbl">PREVIOUS MEAL</span>
-        <div style="display:flex;align-items:center;gap:6px"><input type="time" class="meal-time-sm" id="prev-meal-time" onchange="S.prevMealTime=this.value||null;renderFastingWindow();renderFuel();renderBurnBreakdown();"><span style="font-size:13px;color:var(--txt2)">🕐</span></div>
+        <input type="time" class="meal-time-sm" id="prev-meal-time" onchange="S.prevMealTime=this.value||null;renderFastingWindow();renderFuel();renderBurnBreakdown();">
       </div>
       <span class="card-label" style="margin-bottom:6px">WHAT DID YOU DO BEFORE THIS MEAL?</span>
       <div class="meal-act-list" id="prev-meal-acts"></div>
@@ -1453,7 +1453,7 @@ function applyActTime(which, id, field) {
 
 
 
-const GEMINI_KEY = 'AQ.Ab8RN6LghPPZiPPRc8xMv_ntHxS52QvJwbEfmYYsk_YqKbMeQw';
+var GEMINI_KEY = ''; // Key now stored securely in Cloudflare Worker
 let chatHistory = [], advisorBusy = false, lastUserMsg = '';
 let MS_micros = {}, naturalCache = {}, currentMicroTab = 'supp', microsInited = false;
 
@@ -1814,9 +1814,9 @@ async function sendMessage(){
     var models=['gemini-2.5-flash','gemini-2.5-flash-lite'];
     var data, succeeded=false;
     for(var i=0;i<models.length;i++){
-      var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+models[i]+':generateContent',{
-        method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':GEMINI_KEY},
-        body:JSON.stringify({contents:contents,systemInstruction:{parts:[{text:buildSystemPrompt()}]},generationConfig:{maxOutputTokens:2500,temperature:0.3}})
+      var res=await fetch('https://fuel-gemini-proxy.shadrachsimon91.workers.dev',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({model:models[i],contents:contents,systemInstruction:{parts:[{text:buildSystemPrompt()}]},generationConfig:{maxOutputTokens:2500,temperature:0.3}})
       });
       data=await res.json();
       if(res.ok){succeeded=true;break;}
@@ -2096,9 +2096,9 @@ async function findFoods(id){
   try{
     var models=['gemini-2.5-flash','gemini-2.5-flash-lite'],data,ok=false;
     for(var i=0;i<models.length;i++){
-      var res=await fetch('https://generativelanguage.googleapis.com/v1beta/models/'+models[i]+':generateContent',{
-        method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':GEMINI_KEY},
-        body:JSON.stringify({contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:400,temperature:0.1}})
+      var res=await fetch('https://fuel-gemini-proxy.shadrachsimon91.workers.dev',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({model:models[i],contents:[{role:'user',parts:[{text:prompt}]}],generationConfig:{maxOutputTokens:400,temperature:0.1}})
       });
       data=await res.json(); if(res.ok){ok=true;break;}
     }
