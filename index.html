@@ -1826,8 +1826,12 @@ async function sendMessage(){
     hideTyping();
     if(!succeeded){
       var errMsg=data&&data.error?data.error.message:'Unknown error';
-      var isBusy=errMsg.includes('high demand')||errMsg.includes('RESOURCE_EXHAUSTED');
-      var displayErr=isBusy?'Google servers are busy. Tap RETRY or try again shortly.':'Error: '+errMsg;
+      var isQuota=errMsg.includes('RESOURCE_EXHAUSTED')||errMsg.includes('quota')||errMsg.includes('Quota');
+      var isBusy=errMsg.includes('high demand');
+      var displayErr;
+      if(isQuota) displayErr="You've sent too many questions in the last minute. The limit is 20 per minute — wait about 60 seconds and tap RETRY.";
+      else if(isBusy) displayErr='Google servers are busy. Tap RETRY or try again shortly.';
+      else displayErr='Error: '+errMsg;
       appendMsgWithRetry('ai',displayErr,lastUserMsg);
     } else {
       var reply=data.candidates&&data.candidates[0]?data.candidates[0].content.parts[0].text:'Sorry, could not process that.';
